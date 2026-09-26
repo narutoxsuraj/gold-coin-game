@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Gold Mining</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,sans-serif;color:#fff}
+body{min-height:100vh;background:#05091f;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-3;background:radial-gradient(circle at 75% 12%,#f5c5ff 0 2%,#e25cff 3%,#54247f 10%,#16245f 34%,#070b27 68%,#020412 100%)}
+body:after{content:"";position:fixed;inset:0;z-index:-2;opacity:.22;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:34px 34px}
+.wrap{max-width:520px;margin:auto;padding:22px 18px 40px}.card{background:#09102edb;border:1px solid #ff83eb55;border-radius:26px;padding:22px;box-shadow:0 0 35px #d85cff22,0 25px 70px #0008;backdrop-filter:blur(14px)}
+.hidden{display:none!important}.moon{text-align:center;font-size:90px;filter:drop-shadow(0 0 20px #ffb2f7);margin:8px 0}h1{text-align:center;font-size:42px;margin:4px 0 18px;background:linear-gradient(90deg,#ff9fea,#c36aff,#8ea2ff,#ff9fea);-webkit-background-clip:text;color:transparent}.sub{text-align:center;color:#bfc7e7;font-size:16px}
+button{display:block;width:100%;border:0;border-radius:16px;padding:16px 12px;margin:12px 0;font-size:17px;font-weight:800;color:white;background:linear-gradient(90deg,#f05cda,#b95dff,#718cff);box-shadow:0 0 22px #df63ed44;cursor:pointer}
+button.secondary{background:#151d42;border:1px solid #ff8de844;box-shadow:none}
+button:active{transform:scale(.98)}input{display:block;width:100%;padding:15px;border-radius:13px;border:1px solid #ff8de844;background:#05091c;color:#fff;font-size:18px;outline:none;margin:8px 0 12px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.status{text-align:center;background:#050817;border-radius:14px;padding:15px;margin:12px 0;color:#cbd2ed}.players{display:grid;grid-template-columns:1fr 1fr;gap:10px}.p{background:#111a3c;border:1px solid #7b7eff22;border-radius:17px;padding:16px;text-align:center}.num{font-size:27px;color:#ffd66e;font-weight:900;margin-top:5px}.big{text-align:center;font-size:44px;color:#ff9bea;font-weight:900;margin:18px 0}.guesses{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}.g{background:#202955;padding:8px 11px;border-radius:10px;color:#d9def5}.small{text-align:center;color:#8f98bb;font-size:12px}.code{font-size:28px;text-align:center;letter-spacing:5px;color:#ffd76a;font-weight:900;padding:12px}.link{word-break:break-all;background:#050817;border-radius:10px;padding:10px;color:#bfc7e7;font-size:12px}
+#toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#151c3b;border:1px solid #ff8de855;padding:12px 17px;border-radius:14px;display:none;z-index:20}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="welcome" class="card">
+  <div class="moon">🌙</div>
+  <h1>GOLD MINING</h1>
+  <p class="sub">2 Player • Secret Numbers • Gold Coins</p>
+  <button onclick="enterMine()">ENTER THE MINE ⛏️</button>
+  <p class="small">Tap once to start the game.</p>
+</section>
+
+<section id="homeScreen" class="card hidden">
+  <div class="moon" style="font-size:60px">🌙</div>
+  <h1>GOLD MINING</h1>
+  <button onclick="startLocal()">🎮 PLAY ON THIS PHONE</button>
+  <button onclick="showOnline()">🌐 ONLINE — 2 PHONES</button>
+</section>
+
+<section id="onlineScreen" class="card hidden">
+  <h1>🌐 ONLINE</h1>
+  <button onclick="createRoom()">🔑 CREATE ROOM</button>
+  <button class="secondary" onclick="showJoin()">🚪 JOIN ROOM</button>
+  <button class="secondary" onclick="goHome()">⌂ HOME</button>
+  <div id="hostArea" class="hidden">
+    <div class="status">Room created. Share this link.</div>
+    <div class="code" id="roomCode">------</div>
+    <div class="link" id="shareLink"></div>
+    <button onclick="copyLink()">📋 COPY INVITE LINK</button>
+    <p class="small">The short code is for display. The invite link connects the two phones.</p>
+  </div>
+  <div id="joinArea" class="hidden">
+    <input id="joinInput" placeholder="Paste invite link">
+    <button onclick="joinRoom()">JOIN GAME</button>
+  </div>
+</section>
+
+<section id="game" class="card hidden">
+  <div class="row">
+    <button class="secondary" onclick="toggleMusic()" id="musicBtn">🎵 MUSIC ON</button>
+    <button class="secondary" onclick="goHome()">✕ EXIT</button>
+  </div>
+  <div class="status" id="status">Player 1: choose your secret number.</div>
+  <div class="players"><div class="p">PLAYER 1<div class="num" id="coin1">🪙 ?</div></div><div class="p">PLAYER 2<div class="num" id="coin2">🪙 ?</div></div></div>
+
+  <div id="p1setup">
+    <p class="sub">Player 1 secret number</p>
+    <input id="secret1" type="number" min="1" max="100" placeholder="1 – 100">
+    <button onclick="lock1()">LOCK SECRET 🔒</button>
+  </div>
+  <div id="p2setup" class="hidden">
+    <p class="sub">Player 2 secret number</p>
+    <input id="secret2" type="number" min="1" max="100" placeholder="1 – 100">
+    <button onclick="lock2()">LOCK SECRET 🔒</button>
+  </div>
+  <div id="turnArea" class="hidden">
+    <div class="big" id="turnTitle">PLAYER 1</div>
+    <p class="sub">Guesses left: <b id="left">5</b></p>
+    <input id="guessInput" type="number" min="1" max="100" placeholder="Your guess">
+    <button onclick="makeGuess()">GUESS 🎯</button>
+    <div class="guesses" id="guessList"></div>
+  </div>
+  <div id="result" class="hidden">
+    <div class="big">🏆 GAME OVER</div>
+    <p class="sub" id="resultText"></p>
+    <button onclick="playAgain()">🔄 PLAY AGAIN</button>
+    <button class="secondary" onclick="goHome()">⌂ HOME</button>
+  </div>
+</section>
+</div>
+<div id="toast"></div>
+
+<script>
+let musicOn=true,audio=null,timer=null,turn=1,s1=0,s2=0,c1=0,c2=0,g1=0,g2=0,gameOver=false;
+
+function $(id){return document.getElementById(id)}
+function show(id){$(id).classList.remove("hidden")}
+function hide(id){$(id).classList.add("hidden")}
+function toast(t){let x=$("toast");x.textContent=t;x.style.display="block";clearTimeout(window.tt);window.tt=setTimeout(()=>x.style.display="none",1500)}
+function startAudio(){try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==="suspended")audio.resume()}catch(e){}}
+function beep(f=700,d=.1){if(!audio)return;try{let o=audio.createOscillator(),g=audio.createGain();o.frequency.value=f;o.connect(g);g.connect(audio.destination);g.gain.value=.035;o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d);o.stop(audio.currentTime+d)}catch(e){}}
+function startMusic(){if(!musicOn)return;startAudio();if(timer)return;let n=[220,277,330,277],i=0;timer=setInterval(()=>beep(n[i++%4],.18),700)}
+function stopMusic(){if(timer){clearInterval(timer);timer=null}}
+function enterMine(){startAudio();startMusic();hide("welcome");show("homeScreen")}
+function startLocal(){hide("homeScreen");hide("onlineScreen");show("game");resetGame();startMusic()}
+function showOnline(){hide("homeScreen");show("onlineScreen")}
+function showJoin(){show("joinArea");hide("hostArea")}
+function goHome(){stopMusic();hide("game");hide("onlineScreen");hide("homeScreen");show("homeScreen")}
+function toggleMusic(){musicOn=!musicOn;$("musicBtn").textContent=musicOn?"🎵 MUSIC ON":"🔇 MUSIC OFF";musicOn?startMusic():stopMusic()}
+function resetGame(){turn=1;s1=s2=0;c1=c2=0;g1=g2=0;gameOver=false;$("coin1").textContent="🪙 ?";$("coin2").textContent="🪙 ?";$("secret1").value="";$("secret2").value="";$("guessInput").value="";$("guessList").innerHTML="";hide("p2setup");hide("turnArea");hide("result");show("p1setup");$("status").textContent="Player 1: choose your secret number."}
+function lock1(){let n=Number($("secret1").value);if(!Number.isInteger(n)||n<1||n>100)return toast("Enter 1–100");s1=n;hide("p1setup");show("p2setup");$("status").textContent="Player 2: choose your secret number."}
+function lock2(){let n=Number($("secret2").value);if(!Number.isInteger(n)||n<1||n>100)return toast("Enter 1–100");s2=n;hide("p2setup");show("turnArea");updateTurn()}
+function updateTurn(){$("turnTitle").textContent="PLAYER "+turn;$("left").textContent=5-(turn===1?g1:g2);$("guessInput").value=""}
+function makeGuess(){if(gameOver)return;let n=Number($("guessInput").value);if(!Number.isInteger(n)||n<1||n>100)return toast("Guess 1–100");let p=turn;if(p===1)g1++;else g2++;let correct=p===1?n===s2:n===s1;if(correct){if(p===1)c1++;else c2++;toast("🪙 Coin earned!");beep(1050,.25)}else beep(240,.1);let x=document.createElement("span");x.className="g";x.textContent="Guess "+(p===1?g1:g2);$("guessList").appendChild(x);if((p===1?g1:g2)>=5){if(p===1){turn=2;$("status").textContent="Player 2 turn.";updateTurn()}else finish()}else{turn=p===1?2:1;$("status").textContent="Player "+turn+" turn.";updateTurn()}}
+function finish(){gameOver=true;hide("turnArea");show("result");$("coin1").textContent="🪙 "+c1;$("coin2").textContent="🪙 "+c2;$("resultText").textContent="Player 1: "+c1+" coins • Player 2: "+c2+" coins"}
+function playAgain(){resetGame();startMusic()}
+function createRoom(){let code=Math.random().toString(36).slice(2,8).toUpperCase();$("roomCode").textContent=code;let url=location.href.split("?")[0]+"?room="+code;$("shareLink").textContent=url;show("hostArea");toast("Room created!")}
+function copyLink(){let t=$("shareLink").textContent;navigator.clipboard?navigator.clipboard.writeText(t).then(()=>toast("Copied!")):toast("Long press the link to copy")}
+function joinRoom(){let v=$("joinInput").value.trim();if(!v)return toast("Paste invite link");toast("Join screen ready. Online connection will be added after this stable UI test.")}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)stopMusic()});window.addEventListener("pagehide",stopMusic);window.addEventListener("beforeunload",stopMusic);
+</script>
+</body>
+</html>
