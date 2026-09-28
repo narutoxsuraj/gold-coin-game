@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Gold Mining — Online</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,sans-serif;color:#fff}
+body{min-height:100vh;background:#05091f;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-3;background:radial-gradient(circle at 75% 12%,#f5c5ff 0 2%,#e25cff 3%,#54247f 10%,#16245f 34%,#070b27 68%,#020412 100%)}
+body:after{content:"";position:fixed;inset:0;z-index:-2;opacity:.22;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:34px 34px}
+.wrap{max-width:520px;margin:auto;padding:22px 18px 40px}.card{background:#09102edb;border:1px solid #ff83eb55;border-radius:26px;padding:22px;box-shadow:0 0 35px #d85cff22,0 25px 70px #0008;backdrop-filter:blur(14px)}
+.hidden{display:none!important}.moon{text-align:center;font-size:90px;filter:drop-shadow(0 0 20px #ffb2f7);margin:8px 0}
+h1{text-align:center;font-size:42px;margin:4px 0 18px;background:linear-gradient(90deg,#ff9fea,#c36aff,#8ea2ff,#ff9fea);-webkit-background-clip:text;color:transparent}
+.sub{text-align:center;color:#bfc7e7;font-size:16px}button{display:block;width:100%;border:0;border-radius:16px;padding:16px 12px;margin:12px 0;font-size:17px;font-weight:800;color:white;background:linear-gradient(90deg,#f05cda,#b95dff,#718cff);box-shadow:0 0 22px #df63ed44;cursor:pointer}
+button.secondary{background:#151d42;border:1px solid #ff8de844;box-shadow:none}button:active{transform:scale(.98)}button:disabled{opacity:.45}
+input{display:block;width:100%;padding:15px;border-radius:13px;border:1px solid #ff8de844;background:#05091c;color:#fff;font-size:18px;outline:none;margin:8px 0 12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.status{text-align:center;background:#050817;border-radius:14px;padding:15px;margin:12px 0;color:#cbd2ed}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:10px}.p{background:#111a3c;border:1px solid #7b7eff22;border-radius:17px;padding:16px;text-align:center}
+.num{font-size:27px;color:#ffd66e;font-weight:900;margin-top:5px}.big{text-align:center;font-size:38px;color:#ff9bea;font-weight:900;margin:18px 0}
+.guesses{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}.g{background:#202955;padding:8px 11px;border-radius:10px;color:#d9def5}
+.small{text-align:center;color:#8f98bb;font-size:12px}.code{font-size:28px;text-align:center;letter-spacing:5px;color:#ffd76a;font-weight:900;padding:12px}
+.online-note{background:#151d42;border:1px solid #ff8de833;border-radius:14px;padding:12px;margin:10px 0;color:#d8def5;font-size:13px;line-height:1.45}
+#toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#151c3b;border:1px solid #ff8de855;padding:12px 17px;border-radius:14px;display:none;z-index:100;max-width:88%;text-align:center}
+.roleBadge{text-align:center;margin:8px 0 12px;padding:10px 12px;border-radius:14px;background:linear-gradient(90deg,#24134a,#192b63);border:1px solid #ff8de866;color:#ffd9fa;font-weight:900;letter-spacing:.5px}
+.playerTitle{font-size:17px;font-weight:900;color:#ffb6f2;line-height:1.2}.youCard{border-color:#ff7be9aa!important;box-shadow:0 0 25px #f45bde33}
+.opponentCard{border-color:#7f9dff66!important}.secretbox{font-size:14px;text-align:center;color:#9fa9d0;margin-top:4px}
+.winnerBanner{font-size:30px;font-weight:1000;margin:12px 0;animation:winnerPop .65s ease both,winnerGlow 1.4s ease-in-out infinite alternate}
+.finalCoins{font-size:16px;color:#ffd66e;margin:10px 0}.secretReveal{font-size:13px;color:#bfc7e7;margin-top:10px}
+@keyframes winnerPop{0%{transform:scale(.3) rotate(-5deg);opacity:0}70%{transform:scale(1.12) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes winnerGlow{from{filter:drop-shadow(0 0 4px #ff75e8)}to{filter:drop-shadow(0 0 18px #ffd76a)}}
+.confetti{position:fixed;top:-20px;z-index:200;pointer-events:none;font-size:20px;animation:fall 2.4s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section id="welcome" class="card"><div class="moon">🌙</div><h1>GOLD MINING</h1><p class="sub">2 Player • Secret Numbers • Gold Coins</p><button onclick="enterMine()">ENTER THE MINE ⛏️</button><p class="small">Online rooms are synchronized by Firebase in real time.</p></section>
+
+<section id="homeScreen" class="card hidden"><div class="moon" style="font-size:60px">🌙</div><h1>GOLD MINING</h1><button onclick="showOnline()">🌐 ONLINE — 2 PLAYERS</button><button class="secondary" onclick="startLocal()">🎮 PLAY ON THIS PHONE</button></section>
+
+<section id="onlineScreen" class="card hidden"><h1>🌐 ONLINE</h1><p class="sub">Enter your name 👤</p><input id="playerName" maxlength="14" placeholder="Your name" autocomplete="off">
+<button onclick="createRoom()">🔑 CREATE ROOM</button><button class="secondary" onclick="showJoin()">🚪 JOIN ROOM</button><button class="secondary" onclick="goHome()">⌂ HOME</button>
+<div id="hostArea" class="hidden"><div class="status" id="hostStatus">Creating room…</div><div class="small">ROOM CODE</div><div class="code" id="roomCode">------</div><div class="online-note">Tell your friend this code. No invite link. Keep this screen open until your friend joins.</div></div>
+<div id="joinArea" class="hidden"><p class="sub">Enter your friend's room code</p><input id="joinInput" maxlength="6" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:900"><button onclick="joinRoom()">JOIN GAME 🚀</button><div class="online-note">The code connects both phones through the same cloud room.</div></div>
+<div id="firebaseHint" class="online-note hidden"></div></section>
+
+<section id="onlineGame" class="card hidden"><div class="row"><button class="secondary" onclick="toggleMusic()" id="musicBtn2">🎵 MUSIC ON</button><button class="secondary" onclick="leaveOnline()">✕ EXIT</button></div>
+<div class="status" id="onlineStatus">Connecting…</div><div class="roleBadge" id="myRoleBadge">YOU ARE PLAYER —</div>
+<div class="players"><div class="p" id="p1Card"><div class="playerTitle" id="p1Title">PLAYER 1</div><div class="num" id="ocoin1">🪙 ?</div><div class="secretbox" id="p1SecretLabel">🔒 Secret hidden</div></div>
+<div class="p" id="p2Card"><div class="playerTitle" id="p2Title">PLAYER 2</div><div class="num" id="ocoin2">🪙 ?</div><div class="secretbox" id="p2SecretLabel">🔒 Secret hidden</div></div></div>
+<div id="onlineSetup"><p class="sub">Choose your secret number</p><input id="mySecret" type="number" min="1" max="100" placeholder="1 – 100"><button onclick="sendSecret()">LOCK SECRET 🔒</button></div>
+<div id="onlineTurn" class="hidden"><div class="big" id="onlineTurnTitle">YOUR TURN</div><p class="sub">Guesses left: <b id="onlineLeft">5</b></p><input id="onlineGuess" type="number" min="1" max="100" placeholder="Your guess"><button onclick="sendGuess()">GUESS 🎯</button><div class="guesses" id="onlineGuessList"></div></div>
+<div id="onlineWait" class="hidden"><div class="big">⏳ WAITING</div><p class="sub">Waiting for the other player…</p></div>
+<div id="onlineResult" class="hidden"><div class="big">🏆 GAME OVER</div><p class="sub" id="onlineResultText"></p><button onclick="onlineRematch()">🔄 PLAY AGAIN</button><button class="secondary" onclick="leaveOnline()">⌂ HOME</button></div>
+</section>
+
+<section id="game" class="card hidden"><h1>🎮 LOCAL GAME</h1><div class="status" id="localStatus">Player 1: choose a secret.</div><input id="localSecret" type="number" min="1" max="100" placeholder="Secret number 1–100"><button onclick="localLock()">LOCK SECRET 🔒</button><div id="localGuessBox" class="hidden"><input id="localGuess" type="number" min="1" max="100" placeholder="Guess 1–100"><button onclick="localGuessFn()">GUESS 🎯</button></div><div class="status" id="localResult"></div><button class="secondary" onclick="goHome()">⌂ HOME</button></section>
+</div><div id="toast"></div>
+
+<script>
+/* =========================
+   FIREBASE SETUP
+   1) Create a Firebase project.
+   2) Enable Authentication > Anonymous.
+   3) Create Realtime Database.
+   4) Paste your web app config below.
+   ========================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCYsGOvpZDLdiRYE7tpNMZs_adoHblyi4c",
+  authDomain: "gold-mining-54a77.firebaseapp.com",
+  databaseURL: "https://gold-mining-54a77-default-rtdb.firebaseio.com",
+  projectId: "gold-mining-54a77",
+  storageBucket: "gold-mining-54a77.firebasestorage.app",
+  messagingSenderId: "147619214695",
+  appId: "1:147619214695:web:8cb3345ec084e2ae17ebc2",
+  measurementId: "G-J6SSF17BBG"
+};
+let firebaseReady=false, db=null, clientId=null, roomRef=null, roomCode="", role="", myName="", roomListener=null;
+let local={p1Secret:null,p2Secret:null,p1Locked:false,p2Locked:false,turn:1,p1Coins:0,p2Coins:0,p1Guesses:[],p2Guesses:[],done:false}; let mySecret=null; let privateListener=null;
+const $=id=>document.getElementById(id);
+function hide(id){$(id)?.classList.add('hidden')} function show(id){$(id)?.classList.remove('hidden')}
+function toast(s){const t=$('toast');t.textContent=s;t.style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.style.display='none',2600)}
+function enterMine(){hide('welcome');show('homeScreen')}
+function showOnline(){hide('homeScreen');show('onlineScreen');show('hostArea');hide('hostArea');hide('joinArea');ensureFirebase()}
+function showJoin(){show('joinArea');hide('hostArea');ensureFirebase()}
+function goHome(){try{leaveOnline()}catch(e){console.error(e)}hide('game');hide('onlineScreen');hide('homeScreen');show('homeScreen')}
+function startLocal(){hide('homeScreen');hide('onlineScreen');show('game');local={p1Secret:null,p2Secret:null,p1Locked:false,p2Locked:false,turn:1,p1Coins:0,p2Coins:0,p1Guesses:[],p2Guesses:[],done:false};$('localStatus').textContent='Player 1: choose a secret.';$('localResult').textContent='';hide('localGuessBox')}
+function getName(){const n=($('playerName')?.value||'').trim().slice(0,14);if(!n){toast('Enter your name first');return null}return n}
+function code(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=chars[Math.floor(Math.random()*chars.length)];return s}
+function configLooksReady(){return firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('PASTE_') && !firebaseConfig.projectId.startsWith('PASTE_') && firebaseConfig.databaseURL}
+async function ensureFirebase(){
+ if(firebaseReady)return true;
+ if(!configLooksReady()){ $('firebaseHint').classList.remove('hidden'); $('firebaseHint').innerHTML='⚠️ Firebase configuration is incomplete.'; return false; }
+ try{
+  if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+  db=firebase.database();
+  clientId=localStorage.getItem('goldMiningClientId');
+  if(!clientId){clientId='c_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);localStorage.setItem('goldMiningClientId',clientId)}
+  firebaseReady=true;return true;
+ }catch(e){console.error(e);toast('Firebase connection error: '+(e.code||e.message));return false}
+}
+async function createRoom(){
+ try{
+  $('hostStatus').textContent='Connecting to Firebase…';show('hostArea');hide('joinArea');
+  if(!await ensureFirebase())return;
+  const n=getName();if(!n)return;myName=n;role='host';
+  for(let i=0;i<12;i++){
+   const c=code(),ref=db.ref('rooms/'+c+'/public');
+   const result=await ref.transaction(v=>v===null?{host:{uid:clientId,name:n,ready:false,coins:0,guesses:[]},guest:null,status:'waiting',turn:1,done:false,createdAt:firebase.database.ServerValue.TIMESTAMP}:undefined);
+   if(result.committed){roomCode=c;roomRef=ref;$('roomCode').textContent=c;$('hostStatus').textContent='Room created! Waiting for Player 2…';$('onlineStatus').textContent='Room '+c+' created.';try{await ref.onDisconnect().remove()}catch(e){};subscribeRoom();return}
+  }
+  toast('Could not create a room. Try again.');$('hostStatus').textContent='Could not create room.';
+ }catch(e){console.error(e);$('hostStatus').textContent='Firebase error: '+(e.code||e.message);toast('Create room failed: '+(e.code||e.message))}
+}
+async function joinRoom(){
+ if(!await ensureFirebase())return;
+ const n=getName();if(!n)return;
+ const c=($('joinInput').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(c.length!==6)return toast('Enter the 6-character code');
+ try{
+  const ref=db.ref('rooms/'+c+'/public');
+  const snap=await ref.get();
+  if(!snap.exists())return toast('Room not found. Check the code.');
+  const guestRef=ref.child('guest');
+  const result=await guestRef.transaction(v=>{
+    if(v===null) return {uid:clientId,name:n,ready:false,coins:0,guesses:[]};
+    if(v && v.uid===clientId) return v;
+    return;
+  });
+  if(!result.committed){
+    const latest=await guestRef.get();
+    if(latest.exists() && latest.val()?.uid!==clientId)return toast('Room is already full. Player 1 must create a new room.');
+    return toast('Room is temporarily unavailable. Try again.');
+  }
+  await ref.update({status:'ready'});
+  roomCode=c;roomRef=ref;role='guest';myName=n;
+  try{await ref.onDisconnect().cancel();}catch(e){}
+  try{await guestRef.onDisconnect().remove();}catch(e){}
+  hide('onlineScreen');show('onlineGame');subscribeRoom();
+ }catch(e){console.error(e);toast('Join failed: '+(e.code||e.message))}
+}
+function subscribeRoom(){if(roomListener)roomRef.off('value',roomListener); if(privateListener&&clientId)db.ref('rooms/'+roomCode+'/private/'+clientId).off('value',privateListener); roomListener=snap=>{const r=snap.val();if(!r){toast('Room closed');leaveOnline();return}renderRoom(r)};roomRef.on('value',roomListener); privateListener=snap=>{const v=snap.val()||{};mySecret=v.secret??null;}; db.ref('rooms/'+roomCode+'/private/'+clientId).on('value',privateListener); subscribeActions(); hide('onlineScreen');show('onlineGame');$('onlineStatus').textContent='Syncing room…'}
+function renderRoom(r){
+ const me=role==='host'?r.host:r.guest,opp=role==='host'?r.guest:r.host;
+ $('myRoleBadge').textContent=role==='host'?'🟣 YOU ARE PLAYER 1':'🔵 YOU ARE PLAYER 2';
+ $('p1Title').textContent='PLAYER 1 • '+(r.host?.name||'Waiting');$('p2Title').textContent='PLAYER 2 • '+(r.guest?.name||'Waiting');
+ $('p1Card').classList.toggle('youCard',role==='host');$('p2Card').classList.toggle('youCard',role==='guest');$('p1Card').classList.toggle('opponentCard',role==='guest');$('p2Card').classList.toggle('opponentCard',role==='host');
+ $('ocoin1').textContent='🪙 '+(r.done?(r.host?.coins||0):'?');$('ocoin2').textContent='🪙 '+(r.done?(r.guest?.coins||0):'?');
+ $('p1SecretLabel').textContent= r.done ? '🔓 Secret: '+(role==='host'?mySecret:'Hidden until game end') : (role==='host'&&r.host?.ready?'🔒 Your secret locked':'🔒 Secret hidden');
+ $('p2SecretLabel').textContent= r.done ? '🔓 Secret: '+(role==='guest'?mySecret:'Hidden until game end') : (role==='guest'&&r.guest?.ready?'🔒 Your secret locked':'🔒 Secret hidden');
+ if(!r.guest){$('onlineStatus').textContent='Room '+roomCode+' • Waiting for Player 2…';show('onlineSetup');hide('onlineTurn');hide('onlineWait');hide('onlineResult');return}
+ if(r.done){finishRoom(r);return}
+ if(!me.ready){show('onlineSetup');hide('onlineTurn');hide('onlineWait');$('onlineStatus').textContent='Choose your secret number.';return}
+ if(!opp.ready){hide('onlineSetup');hide('onlineTurn');show('onlineWait');$('onlineStatus').textContent='Secret locked. Waiting for '+opp.name+'…';return}
+ hide('onlineSetup');hide('onlineWait');show('onlineTurn');
+ const myTurn=(r.turn===1&&role==='host')||(r.turn===2&&role==='guest');$('onlineTurnTitle').textContent=myTurn?'YOUR TURN':'OPPONENT TURN';$('onlineGuess').disabled=!myTurn;$('onlineLeft').textContent=5-(me.guesses?.length||0);$('onlineStatus').textContent=myTurn?'Your turn — guess 1–100.':'Waiting for '+opp.name+'…';
+ $('onlineGuessList').innerHTML=(me.guesses||[]).map((_,i)=>'<span class="g">Guess '+(i+1)+'</span>').join('');
+}
+async function sendSecret(){
+ const n=Number($('mySecret').value);if(!Number.isInteger(n)||n<1||n>100)return toast('Enter 1–100');if(!roomRef||!clientId)return;
+ mySecret=n;const path=role==='host'?'host':'guest';await db.ref('rooms/'+roomCode+'/private/'+clientId).set({secret:n});await roomRef.child(path).update({ready:true,secretReveal:null});$('mySecret').value='';beep(900,.12)}
+async function sendGuess(){
+ if(!roomRef||!clientId)return;const snap=await roomRef.get(),r=snap.val();if(!r||r.done)return;const me=role==='host'?r.host:r.guest,opp=role==='host'?r.guest:r.host;
+ const myTurn=(r.turn===1&&role==='host')||(r.turn===2&&role==='guest');if(!myTurn)return toast('Wait for your turn');
+ const n=Number($('onlineGuess').value);if(!Number.isInteger(n)||n<1||n>100)return toast('Guess 1–100');if((me.guesses||[]).length>=5)return toast('No guesses left');
+ const newGuesses=[...(me.guesses||[]),n];const myPath=role==='host'?'host':'guest';await roomRef.child(myPath+'/guesses').set(newGuesses);await roomRef.update({turn:role==='host'?2:1});
+ const actionId=clientId+'_'+Date.now();const targetUid=role==='host' ? r.guest.uid : r.host.uid;await roomRef.child('actions/'+actionId).set({from:clientId,guess:n,guesser:role,targetUid,processed:false,createdAt:firebase.database.ServerValue.TIMESTAMP});$('onlineGuess').value='';beep(600,.12)
+}
+function subscribeActions(){
+ const ar=db.ref('rooms/'+roomCode+'/public/actions');
+ ar.on('child_added',async snap=>{
+  const a=snap.val();
+  if(!a||a.from===clientId||a.targetUid!==clientId||a.processed===true||!mySecret)return;
+  const roomSnap=await roomRef.get(),r=roomSnap.val();
+  if(!r||r.done)return;
+  const hit=Number(a.guess)===Number(mySecret);
+  if(hit){
+   const path=a.guesser==='host'?'host':'guest';
+   await roomRef.child(path+'/coins').transaction(v=>(v||0)+1);
+  }
+  await snap.ref.update({processed:true,processedAt:firebase.database.ServerValue.TIMESTAMP});
+  const rr=(await roomRef.get()).val();
+  const total=(rr?.host?.guesses?.length||0)+(rr?.guest?.guesses?.length||0);
+  if(rr && total>=10) await roomRef.update({done:true});
+ });
+}
+
+function finishRoom(r){
+ hide('onlineSetup');hide('onlineTurn');hide('onlineWait');show('onlineResult');
+ const p1=r.host,p2=r.guest,winner=(p1.coins===p2.coins?'DRAW':p1.coins>p2.coins?'PLAYER 1':'PLAYER 2');const wn=winner==='DRAW'?'':(winner==='PLAYER 1'?p1.name:p2.name);
+ $('onlineResultText').innerHTML='<div class="winnerBanner">'+(winner==='DRAW'?'🤝 DRAW!':'🏆 '+wn+' WINS!')+'</div><div class="finalCoins">'+p1.name+' 🪙 '+p1.coins+' &nbsp;&nbsp; '+p2.name+' 🪙 '+p2.coins+'</div><div class="secretReveal">🔓 Your secret: '+mySecret+' • Opponent secret is revealed only when the room owner publishes the final result.</div>';
+ if(winner!=='DRAW')confetti();beep(winner==='DRAW'?600:1400,.3)
+}
+async function onlineRematch(){
+ if(!roomRef)return;const snap=await roomRef.get(),r=snap.val();if(!r)return;await roomRef.update({done:false,turn:1,host:{...r.host,ready:false,coins:0,guesses:[]},guest:{...r.guest,ready:false,coins:0,guesses:[]}});hide('onlineResult');show('onlineSetup');$('onlineStatus').textContent='New round! Choose your secret.'
+}
+async function leaveOnline(){
+ try{
+  if(roomRef){
+   if(role==='host') await roomRef.remove();
+   else if(role==='guest') await roomRef.child('guest').remove();
+  }
+ }catch(e){console.error(e)}
+ try{
+  if(roomRef&&roomListener)roomRef.off('value',roomListener);
+  if(roomRef&&clientId&&privateListener)db.ref('rooms/'+roomCode+'/private/'+clientId).off('value',privateListener);
+  if(roomRef&&roomCode)db.ref('rooms/'+roomCode+'/public/actions').off('child_added');
+ }catch(e){console.error(e)}
+ roomListener=null;privateListener=null;roomRef=null;roomCode='';role='';mySecret=null;
+ hide('onlineGame');hide('hostArea');hide('joinArea');
+}
+function beep(f,d){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.connect(g);g.connect(a.destination);g.gain.value=.04;o.start();setTimeout(()=>{o.stop();a.close()},d*1000)}catch(e){}}
+function confetti(){const icons=['✨','🪙','💎','⭐','🎉','💰'];for(let i=0;i<55;i++){const e=document.createElement('div');e.className='confetti';e.textContent=icons[i%icons.length];e.style.left=Math.random()*100+'vw';e.style.animationDelay=(Math.random()*.7)+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}}
+function toggleMusic(){toast('Music control can be added to the final build.')}
+function localLock(){const n=Number($('localSecret').value);if(!Number.isInteger(n)||n<1||n>100)return toast('Enter 1–100');if(local.turn===1){local.p1Secret=n;local.p1Locked=true;local.turn=2;$('localSecret').value='';$('localStatus').textContent='Player 2: choose a secret.'}else{local.p2Secret=n;local.p2Locked=true;$('localSecret').value='';$('localStatus').textContent='Both secrets locked. Player 1: guess.';show('localGuessBox');$('localGuess').focus()}}
+function localGuessFn(){const n=Number($('localGuess').value);if(!Number.isInteger(n)||n<1||n>100)return toast('Guess 1–100');const guessing=local.turn===1?1:2,secret=guessing===1?local.p2Secret:local.p1Secret,hit=n===secret;if(hit)guessing===1?local.p1Coins++:local.p2Coins++;if(guessing===1)local.p1Guesses.push(n);else local.p2Guesses.push(n);$('localGuess').value='';if(local.p1Guesses.length+local.p2Guesses.length>=10){local.done=true;$('localResult').innerHTML='🏆 '+(local.p1Coins===local.p2Coins?'DRAW':local.p1Coins>local.p2Coins?'PLAYER 1 WINS!':'PLAYER 2 WINS!')+'<br>🪙 P1 '+local.p1Coins+' • P2 '+local.p2Coins;return}local.turn=guessing===1?2:1;$('localStatus').textContent='Player '+local.turn+': your turn.'}
+</script>
+</body>
+</html>
